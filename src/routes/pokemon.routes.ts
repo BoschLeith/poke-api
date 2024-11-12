@@ -32,8 +32,8 @@ const createResponse = <T>(
   return { success, data, error };
 };
 
-router.get("/", (req: Request, res: Response) => {
-  res.send(createResponse(true, pokemonService.getAllPokemon()));
+router.get("/", async (req: Request, res: Response) => {
+  res.send(createResponse(true, await pokemonService.getAllPokemon()));
 });
 
 router.get("/:id", (req: Request, res: Response) => {

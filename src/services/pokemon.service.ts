@@ -1,4 +1,7 @@
 import { Pokemon } from "../models/pokemon.model";
+import DatabaseService from "./database.service";
+
+const databaseService = new DatabaseService();
 
 const database: Pokemon[] = [
   {
@@ -40,8 +43,8 @@ const database: Pokemon[] = [
 ];
 
 export class PokemonService {
-  getAllPokemon(): Pokemon[] {
-    return database;
+  async getAllPokemon(): Promise<Pokemon[]> {
+    return await databaseService.getAllPokemon();
   }
 
   getPokemonById(id: number): Pokemon | undefined {
