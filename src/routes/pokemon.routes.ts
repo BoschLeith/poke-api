@@ -1,46 +1,10 @@
 import express, { Request, Response } from "express";
 import { Pokemon } from "../models/pokemon.model";
+import { PokemonService } from "../services/pokemon.service";
+import { HttpStatus } from "../utils/httpStatus";
 
 const router = express.Router();
-
-const database: Pokemon[] = [
-  {
-    id: 1,
-    name: "Bulbasaur",
-    sprite: "https://img.pokemondb.net/sprites/home/normal/bulbasaur.png",
-    types: ["Grass", "Poison"],
-  },
-  {
-    id: 2,
-    name: "Ivysaur",
-    sprite: "https://img.pokemondb.net/sprites/home/normal/ivysaur.png",
-    types: ["Grass", "Poison"],
-  },
-  {
-    id: 3,
-    name: "Venusaur",
-    sprite: "https://img.pokemondb.net/sprites/home/normal/venusaur.png",
-    types: ["Grass", "Poison"],
-  },
-  {
-    id: 4,
-    name: "Charmander",
-    sprite: "https://img.pokemondb.net/sprites/home/normal/charmander.png",
-    types: ["Fire"],
-  },
-  {
-    id: 5,
-    name: "Charmeleon",
-    sprite: "https://img.pokemondb.net/sprites/home/normal/charmeleon.png",
-    types: ["Fire"],
-  },
-  {
-    id: 6,
-    name: "Charizard",
-    sprite: "https://img.pokemondb.net/sprites/home/normal/charizard.png",
-    types: ["Fire", "Flying"],
-  },
-];
+const pokemonService = new PokemonService();
 
 interface PokemonRequestBody {
   name: string;
@@ -69,17 +33,17 @@ const createResponse = <T>(
 };
 
 router.get("/", (req: Request, res: Response) => {
-  res.send(createResponse(true, database));
+  res.send(createResponse(true, pokemonService.getAllPokemon()));
 });
 
 router.get("/:id", (req: Request, res: Response) => {
-  const pokemon = database.find((p) => p.id === parseInt(req.params.id));
+  const pokemon = pokemonService.getPokemonById(parseInt(req.params.id));
 
   if (!pokemon) {
-    res.status(404).send(
+    res.status(HttpStatus.NOT_FOUND).send(
       createResponse(false, null, {
-        message: "Pokemon not found",
-        details: `The pokemon with the ID ${req.params.id} does not exist in our records.`,
+        message: "Pokémon not found",
+        details: `The Pokémon with the ID ${req.params.id} does not exist in our records.`,
       })
     );
   } else {
@@ -91,14 +55,14 @@ router.post("/pokemon", (req: Request, res: Response) => {
   const { name, sprite, types }: PokemonRequestBody = req.body;
 
   const newPokemon: Pokemon = {
-    id: database.length + 1,
+    id: 0,
     name,
     sprite,
     types,
   };
 
   if (!newPokemon.name || !newPokemon.sprite || newPokemon.types.length === 0) {
-    res.status(400).send(
+    res.status(HttpStatus.BAD_REQUEST).send(
       createResponse(false, null, {
         message: "Missing required fields",
         details:
@@ -108,18 +72,18 @@ router.post("/pokemon", (req: Request, res: Response) => {
     return;
   }
 
-  database.push(newPokemon);
-  res.status(201).send(createResponse(true, newPokemon));
+  const createdPokemon = pokemonService.createPokemon(newPokemon);
+  res.status(HttpStatus.CREATED).send(createResponse(true, createdPokemon));
 });
 
 router.put("/:id", (req: Request, res: Response) => {
-  const pokemon = database.find((p) => p.id === parseInt(req.params.id));
+  const pokemon = pokemonService.getPokemonById(parseInt(req.params.id));
 
   if (!pokemon) {
-    res.status(404).send(
+    res.status(HttpStatus.NOT_FOUND).send(
       createResponse(false, null, {
-        message: "Pokemon not found",
-        details: `The pokemon with the ID ${req.params.id} does not exist in our records.`,
+        message: "Pokémon not found",
+        details: `The Pokémon with the ID ${req.params.id} does not exist in our records.`,
       })
     );
   } else {
@@ -129,27 +93,36 @@ router.put("/:id", (req: Request, res: Response) => {
       types = pokemon.types,
     }: PokemonRequestBody = req.body;
 
-    pokemon.name = name;
-    pokemon.sprite = sprite;
-    pokemon.types = types;
+    const updatedPokemon = pokemonService.updatePokemon(pokemon.id, {
+      name,
+      sprite,
+      types,
+    });
 
-    res.send(createResponse(true, pokemon));
+    if (!updatedPokemon) {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+        createResponse(false, null, {
+          message: "Failed to update Pokémon",
+          details: `An unexpected error occurred while updating the Pokémon with the ID ${req.params.id}.`,
+        })
+      );
+      return;
+    }
+
+    res.send(createResponse(true, updatedPokemon));
   }
 });
 
 router.delete("/:id", (req: Request, res: Response) => {
-  const index = database.findIndex((p) => p.id === parseInt(req.params.id));
-
-  if (index === -1) {
-    res.status(404).send(
+  if (!pokemonService.deletePokemon(parseInt(req.params.id))) {
+    res.status(HttpStatus.NOT_FOUND).send(
       createResponse(false, null, {
-        message: "Pokemon not found",
-        details: `The pokemon with the ID ${req.params.id} does not exist in our records.`,
+        message: "Pokémon not found",
+        details: `The Pokémon with the ID ${req.params.id} does not exist in our records.`,
       })
     );
   } else {
-    database.splice(index, 1);
-    res.status(204).send(createResponse(true, null));
+    res.status(HttpStatus.NO_CONTENT).send(createResponse(true, null));
   }
 });
 
