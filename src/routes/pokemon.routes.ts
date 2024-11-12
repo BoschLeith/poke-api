@@ -7,85 +7,133 @@ const database: Pokemon[] = [
   {
     id: 1,
     name: "Bulbasaur",
-    image: "https://img.pokemondb.net/sprites/home/normal/bulbasaur.png",
-    type: "Grass/Poison",
+    sprite: "https://img.pokemondb.net/sprites/home/normal/bulbasaur.png",
+    types: ["Grass", "Poison"],
   },
   {
     id: 2,
     name: "Ivysaur",
-    image: "https://img.pokemondb.net/sprites/home/normal/ivysaur.png",
-    type: "Grass/Poison",
+    sprite: "https://img.pokemondb.net/sprites/home/normal/ivysaur.png",
+    types: ["Grass", "Poison"],
   },
   {
     id: 3,
     name: "Venusaur",
-    image: "https://img.pokemondb.net/sprites/home/normal/venusaur.png",
-    type: "Grass/Poison",
+    sprite: "https://img.pokemondb.net/sprites/home/normal/venusaur.png",
+    types: ["Grass", "Poison"],
   },
   {
     id: 4,
     name: "Charmander",
-    image: "https://img.pokemondb.net/sprites/home/normal/charmander.png",
-    type: "Fire",
+    sprite: "https://img.pokemondb.net/sprites/home/normal/charmander.png",
+    types: ["Fire"],
   },
   {
     id: 5,
     name: "Charmeleon",
-    image: "https://img.pokemondb.net/sprites/home/normal/charmeleon.png",
-    type: "Fire",
+    sprite: "https://img.pokemondb.net/sprites/home/normal/charmeleon.png",
+    types: ["Fire"],
   },
   {
     id: 6,
     name: "Charizard",
-    image: "https://img.pokemondb.net/sprites/home/normal/charizard.png",
-    type: "Fire/Flying",
+    sprite: "https://img.pokemondb.net/sprites/home/normal/charizard.png",
+    types: ["Fire", "Flying"],
   },
 ];
 
+interface PokemonRequestBody {
+  name: string;
+  sprite: string;
+  types: string[];
+}
+
+interface ResponseData<T> {
+  success: boolean;
+  data: T | null;
+  error: {
+    message: string;
+    details: string | null;
+  } | null;
+}
+
+const createResponse = <T>(
+  success: boolean,
+  data: T | null = null,
+  error: {
+    message: string;
+    details: string | null;
+  } | null = null
+): ResponseData<T> => {
+  return { success, data, error };
+};
+
 router.get("/", (req: Request, res: Response) => {
-  res.send(database);
+  res.send(createResponse(true, database));
 });
 
 router.get("/:id", (req: Request, res: Response) => {
   const pokemon = database.find((p) => p.id === parseInt(req.params.id));
 
   if (!pokemon) {
-    res.status(404).send("Pokemon not found");
+    res.status(404).send(
+      createResponse(false, null, {
+        message: "Pokemon not found",
+        details: `The pokemon with the ID ${req.params.id} does not exist in our records.`,
+      })
+    );
   } else {
-    res.send(pokemon);
+    res.send(createResponse(true, pokemon));
   }
 });
 
 router.post("/pokemon", (req: Request, res: Response) => {
-  const { name, image, type } = req.body;
+  const { name, sprite, types }: PokemonRequestBody = req.body;
 
   const newPokemon: Pokemon = {
     id: database.length + 1,
     name,
-    image,
-    type,
+    sprite,
+    types,
   };
 
-  if (!newPokemon.name || !newPokemon.image || !newPokemon.type) {
-    res.status(400).send("Missing required fields");
+  if (!newPokemon.name || !newPokemon.sprite || newPokemon.types.length === 0) {
+    res.status(400).send(
+      createResponse(false, null, {
+        message: "Missing required fields",
+        details:
+          "One or more required fields (name, sprite, or types) are missing in the request.",
+      })
+    );
     return;
   }
 
   database.push(newPokemon);
-  res.status(201).send(newPokemon);
+  res.status(201).send(createResponse(true, newPokemon));
 });
 
 router.put("/:id", (req: Request, res: Response) => {
   const pokemon = database.find((p) => p.id === parseInt(req.params.id));
 
   if (!pokemon) {
-    res.status(404).send("Pokemon not found");
+    res.status(404).send(
+      createResponse(false, null, {
+        message: "Pokemon not found",
+        details: `The pokemon with the ID ${req.params.id} does not exist in our records.`,
+      })
+    );
   } else {
-    pokemon.name = req.body.name || pokemon.name;
-    pokemon.image = req.body.image || pokemon.image;
-    pokemon.type = req.body.type || pokemon.type;
+    const {
+      name = pokemon.name,
+      sprite = pokemon.sprite,
+      types = pokemon.types,
+    }: PokemonRequestBody = req.body;
 
-    res.json(pokemon);
+    pokemon.name = name;
+    pokemon.sprite = sprite;
+    pokemon.types = types;
+
+    res.send(createResponse(true, pokemon));
   }
 });
 
@@ -93,10 +141,15 @@ router.delete("/:id", (req: Request, res: Response) => {
   const index = database.findIndex((p) => p.id === parseInt(req.params.id));
 
   if (index === -1) {
-    res.status(404).send("Pokemon not found");
+    res.status(404).send(
+      createResponse(false, null, {
+        message: "Pokemon not found",
+        details: `The pokemon with the ID ${req.params.id} does not exist in our records.`,
+      })
+    );
   } else {
     database.splice(index, 1);
-    res.status(204).send();
+    res.status(204).send(createResponse(true, null));
   }
 });
 
