@@ -36,8 +36,8 @@ router.get("/", async (req: Request, res: Response) => {
   res.send(createResponse(true, await pokemonService.getAllPokemon()));
 });
 
-router.get("/:id", (req: Request, res: Response) => {
-  const pokemon = pokemonService.getPokemonById(parseInt(req.params.id));
+router.get("/:id", async (req: Request, res: Response) => {
+  const pokemon = await pokemonService.getPokemonById(parseInt(req.params.id));
 
   if (!pokemon) {
     res.status(HttpStatus.NOT_FOUND).send(
@@ -51,7 +51,7 @@ router.get("/:id", (req: Request, res: Response) => {
   }
 });
 
-router.post("/pokemon", (req: Request, res: Response) => {
+router.post("/pokemon", async (req: Request, res: Response) => {
   const { name, sprite, types }: PokemonRequestBody = req.body;
 
   const newPokemon: Pokemon = {
@@ -72,12 +72,12 @@ router.post("/pokemon", (req: Request, res: Response) => {
     return;
   }
 
-  const createdPokemon = pokemonService.createPokemon(newPokemon);
+  const createdPokemon = await pokemonService.createPokemon(newPokemon);
   res.status(HttpStatus.CREATED).send(createResponse(true, createdPokemon));
 });
 
-router.put("/:id", (req: Request, res: Response) => {
-  const pokemon = pokemonService.getPokemonById(parseInt(req.params.id));
+router.put("/:id", async (req: Request, res: Response) => {
+  const pokemon = await pokemonService.getPokemonById(parseInt(req.params.id));
 
   if (!pokemon) {
     res.status(HttpStatus.NOT_FOUND).send(
@@ -93,7 +93,7 @@ router.put("/:id", (req: Request, res: Response) => {
       types = pokemon.types,
     }: PokemonRequestBody = req.body;
 
-    const updatedPokemon = pokemonService.updatePokemon(pokemon.id, {
+    const updatedPokemon = await pokemonService.updatePokemon(pokemon.id, {
       name,
       sprite,
       types,
@@ -113,8 +113,8 @@ router.put("/:id", (req: Request, res: Response) => {
   }
 });
 
-router.delete("/:id", (req: Request, res: Response) => {
-  if (!pokemonService.deletePokemon(parseInt(req.params.id))) {
+router.delete("/:id", async (req: Request, res: Response) => {
+  if (!(await pokemonService.deletePokemon(parseInt(req.params.id)))) {
     res.status(HttpStatus.NOT_FOUND).send(
       createResponse(false, null, {
         message: "Pokémon not found",

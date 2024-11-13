@@ -47,36 +47,19 @@ export class PokemonService {
     return await databaseService.getAllPokemon();
   }
 
-  getPokemonById(id: number): Pokemon | undefined {
-    return database.find((p) => p.id === id);
+  async getPokemonById(id: number): Promise<Pokemon> {
+    return await databaseService.getPokemonById(id);
   }
 
-  createPokemon(pokemon: Pokemon): Pokemon {
-    pokemon.id = database.length + 1;
-    database.push(pokemon);
-    return pokemon;
+  async createPokemon(pokemon: Pokemon): Promise<Pokemon> {
+    return await databaseService.createPokemon(pokemon);
   }
 
-  updatePokemon(id: number, updates: Partial<Pokemon>): Pokemon | undefined {
-    const index = database.findIndex((p) => p.id === id);
-    if (index !== -1) {
-      const existingPokemon = database[index];
-      const updatedPokemon: Pokemon = {
-        ...existingPokemon,
-        ...updates,
-      };
-      database[index] = updatedPokemon;
-      return updatedPokemon;
-    }
-    return undefined;
+  async updatePokemon(id: number, updates: Partial<Pokemon>): Promise<Pokemon> {
+    return await databaseService.updatePokemon(id, updates);
   }
 
-  deletePokemon(id: number): boolean {
-    const index = database.findIndex((p) => p.id === id);
-    if (index !== -1) {
-      database.splice(index, 1);
-      return true;
-    }
-    return false;
+  async deletePokemon(id: number): Promise<boolean> {
+    return await databaseService.deletePokemon(id);
   }
 }
