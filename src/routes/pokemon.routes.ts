@@ -1,16 +1,33 @@
 import express from "express";
 import { pokemonController } from "@controllers/pokemon.controller";
+import pokemonMiddleware from "@middleware/pokemon.middleware";
 
 const router = express.Router();
 
 router.get("/", pokemonController.getAllPokemon);
 
-router.get("/:id", pokemonController.getPokemonById);
+router.get(
+  "/:id",
+  pokemonMiddleware.getPokemonByIdValidation,
+  pokemonController.getPokemonById
+);
 
-router.post("/", pokemonController.createPokemon);
+router.post(
+  "/",
+  pokemonMiddleware.createPokemonValidation,
+  pokemonController.createPokemon
+);
 
-router.put("/:id", pokemonController.updatePokemon);
+router.put(
+  "/:id",
+  pokemonMiddleware.updatePokemonValidation,
+  pokemonController.updatePokemon
+);
 
-router.delete("/:id", pokemonController.deletePokemon);
+router.delete(
+  "/:id",
+  pokemonMiddleware.deletePokemonValidation,
+  pokemonController.deletePokemon
+);
 
 export default router;

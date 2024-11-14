@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { validationResult } from "express-validator";
 import { Pokemon } from "@models/pokemon.model";
 import { PokemonService } from "@services/pokemon.service";
 import { HttpStatus } from "@utils/httpStatus";
@@ -37,6 +38,17 @@ export const pokemonController = {
   },
 
   async getPokemonById(req: Request, res: Response) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(HttpStatus.BAD_REQUEST).send(
+        createResponse(false, null, {
+          message: "Validation Error",
+          details: `${errors.array()[0].msg} - Provided ID: ${req.params.id}`,
+        })
+      );
+      return;
+    }
+
     const pokemon = await pokemonService.getPokemonById(
       parseInt(req.params.id)
     );
@@ -54,6 +66,21 @@ export const pokemonController = {
   },
 
   async createPokemon(req: Request, res: Response) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const errorMessages = errors
+        .array()
+        .map((error) => error.msg)
+        .join(", ");
+      res.status(HttpStatus.BAD_REQUEST).send(
+        createResponse(false, null, {
+          message: "Validation Error",
+          details: errorMessages,
+        })
+      );
+      return;
+    }
+
     const { name, sprite, types }: PokemonRequestBody = req.body;
 
     const newPokemon: Pokemon = {
@@ -63,26 +90,26 @@ export const pokemonController = {
       types,
     };
 
-    if (
-      !newPokemon.name ||
-      !newPokemon.sprite ||
-      newPokemon.types.length === 0
-    ) {
-      res.status(HttpStatus.BAD_REQUEST).send(
-        createResponse(false, null, {
-          message: "Missing required fields",
-          details:
-            "One or more required fields (name, sprite, or types) are missing in the request.",
-        })
-      );
-      return;
-    }
-
     const createdPokemon = await pokemonService.createPokemon(newPokemon);
     res.status(HttpStatus.CREATED).send(createResponse(true, createdPokemon));
   },
 
   async updatePokemon(req: Request, res: Response) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const errorMessages = errors
+        .array()
+        .map((error) => error.msg)
+        .join(", ");
+      res.status(HttpStatus.BAD_REQUEST).send(
+        createResponse(false, null, {
+          message: "Validation Error",
+          details: errorMessages,
+        })
+      );
+      return;
+    }
+
     const pokemon = await pokemonService.getPokemonById(
       parseInt(req.params.id)
     );
@@ -122,6 +149,17 @@ export const pokemonController = {
   },
 
   async deletePokemon(req: Request, res: Response) {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(HttpStatus.BAD_REQUEST).send(
+        createResponse(false, null, {
+          message: "Validation Error",
+          details: `${errors.array()[0].msg} - Provided ID: ${req.params.id}`,
+        })
+      );
+      return;
+    }
+
     if (!(await pokemonService.deletePokemon(parseInt(req.params.id)))) {
       res.status(HttpStatus.NOT_FOUND).send(
         createResponse(false, null, {
