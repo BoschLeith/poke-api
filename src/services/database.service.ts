@@ -1,6 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 import dotenv from "dotenv";
-import { Pokemon } from "../models/pokemon.model";
+import { Pokemon } from "@models/pokemon.model";
 
 dotenv.config();
 const sql = neon(`${process.env.DATABASE_URL}`);
@@ -25,7 +25,7 @@ export default class PokemonService {
         p.id;
     `;
 
-    return response[0] as Pokemon[];
+    return response as Pokemon[];
   }
 
   async getPokemonById(id: number): Promise<Pokemon> {

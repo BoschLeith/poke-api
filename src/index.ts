@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
 import express, { Express } from "express";
-import pokemonRoutes from "./routes/pokemon.routes";
+import pokemonRoutes from "@routes/pokemon.routes";
 
 dotenv.config();
 const app: Express = express();

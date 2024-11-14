@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
-import { Pokemon } from "../models/pokemon.model";
-import { PokemonService } from "../services/pokemon.service";
-import { HttpStatus } from "../utils/httpStatus";
+import { Pokemon } from "@models/pokemon.model";
+import { PokemonService } from "@services/pokemon.service";
+import { HttpStatus } from "@utils/httpStatus";
 
 const router = express.Router();
 const pokemonService = new PokemonService();

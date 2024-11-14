@@ -1,4 +1,4 @@
-import { Pokemon } from "../models/pokemon.model";
+import { Pokemon } from "@models/pokemon.model";
 import DatabaseService from "./database.service";
 
 const databaseService = new DatabaseService();
