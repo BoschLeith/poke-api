@@ -34,7 +34,17 @@ const createResponse = <T>(
 
 export const pokemonController = {
   async getAllPokemon(req: Request, res: Response) {
-    res.send(createResponse(true, await pokemonService.getAllPokemon()));
+    try {
+      const pokemonData = await pokemonService.getAllPokemon();
+      res.status(HttpStatus.OK).send(createResponse(true, pokemonData));
+    } catch (error) {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+        createResponse(false, null, {
+          message: "Internal Server Error",
+          details: "An unexpected error occurred",
+        })
+      );
+    }
   },
 
   async getPokemonById(req: Request, res: Response) {
@@ -49,19 +59,28 @@ export const pokemonController = {
       return;
     }
 
-    const pokemon = await pokemonService.getPokemonById(
-      parseInt(req.params.id)
-    );
+    try {
+      const pokemon = await pokemonService.getPokemonById(
+        parseInt(req.params.id)
+      );
 
-    if (!pokemon) {
-      res.status(HttpStatus.NOT_FOUND).send(
+      if (!pokemon) {
+        res.status(HttpStatus.NOT_FOUND).send(
+          createResponse(false, null, {
+            message: "Pokémon not found",
+            details: `The Pokémon with the ID ${req.params.id} does not exist in our records.`,
+          })
+        );
+      } else {
+        res.status(HttpStatus.OK).send(createResponse(true, pokemon));
+      }
+    } catch (error) {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
         createResponse(false, null, {
-          message: "Pokémon not found",
-          details: `The Pokémon with the ID ${req.params.id} does not exist in our records.`,
+          message: "Internal Server Error",
+          details: "An unexpected error occurred",
         })
       );
-    } else {
-      res.send(createResponse(true, pokemon));
     }
   },
 
@@ -90,8 +109,17 @@ export const pokemonController = {
       types,
     };
 
-    const createdPokemon = await pokemonService.createPokemon(newPokemon);
-    res.status(HttpStatus.CREATED).send(createResponse(true, createdPokemon));
+    try {
+      const createdPokemon = await pokemonService.createPokemon(newPokemon);
+      res.status(HttpStatus.CREATED).send(createResponse(true, createdPokemon));
+    } catch (error) {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+        createResponse(false, null, {
+          message: "Internal Server Error",
+          details: "An unexpected error occurred",
+        })
+      );
+    }
   },
 
   async updatePokemon(req: Request, res: Response) {
@@ -110,41 +138,50 @@ export const pokemonController = {
       return;
     }
 
-    const pokemon = await pokemonService.getPokemonById(
-      parseInt(req.params.id)
-    );
-
-    if (!pokemon) {
-      res.status(HttpStatus.NOT_FOUND).send(
-        createResponse(false, null, {
-          message: "Pokémon not found",
-          details: `The Pokémon with the ID ${req.params.id} does not exist in our records.`,
-        })
+    try {
+      const pokemon = await pokemonService.getPokemonById(
+        parseInt(req.params.id)
       );
-    } else {
-      const {
-        name = pokemon.name,
-        sprite = pokemon.sprite,
-        types = pokemon.types,
-      }: PokemonRequestBody = req.body;
 
-      const updatedPokemon = await pokemonService.updatePokemon(pokemon.id, {
-        name,
-        sprite,
-        types,
-      });
-
-      if (!updatedPokemon) {
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+      if (!pokemon) {
+        res.status(HttpStatus.NOT_FOUND).send(
           createResponse(false, null, {
-            message: "Failed to update Pokémon",
-            details: `An unexpected error occurred while updating the Pokémon with the ID ${req.params.id}.`,
+            message: "Pokémon not found",
+            details: `The Pokémon with the ID ${req.params.id} does not exist in our records.`,
           })
         );
-        return;
-      }
+      } else {
+        const {
+          name = pokemon.name,
+          sprite = pokemon.sprite,
+          types = pokemon.types,
+        }: PokemonRequestBody = req.body;
 
-      res.send(createResponse(true, updatedPokemon));
+        const updatedPokemon = await pokemonService.updatePokemon(pokemon.id, {
+          name,
+          sprite,
+          types,
+        });
+
+        if (!updatedPokemon) {
+          res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+            createResponse(false, null, {
+              message: "Failed to update Pokémon",
+              details: `An unexpected error occurred while updating the Pokémon with the ID ${req.params.id}.`,
+            })
+          );
+          return;
+        }
+
+        res.status(HttpStatus.OK).send(createResponse(true, updatedPokemon));
+      }
+    } catch (error) {
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
+        createResponse(false, null, {
+          message: "Internal Server Error",
+          details: "An unexpected error occurred",
+        })
+      );
     }
   },
 
@@ -160,15 +197,29 @@ export const pokemonController = {
       return;
     }
 
-    if (!(await pokemonService.deletePokemon(parseInt(req.params.id)))) {
-      res.status(HttpStatus.NOT_FOUND).send(
+    try {
+      const deleted = await pokemonService.deletePokemon(
+        parseInt(req.params.id)
+      );
+
+      if (!deleted) {
+        res.status(HttpStatus.NOT_FOUND).send(
+          createResponse(false, null, {
+            message: "Pokémon not found",
+            details: `The Pokémon with the ID ${req.params.id} does not exist in our records.`,
+          })
+        );
+      } else {
+        res.status(HttpStatus.NO_CONTENT).send(createResponse(true, null));
+      }
+    } catch (error) {
+      console.error(error);
+      res.status(HttpStatus.INTERNAL_SERVER_ERROR).send(
         createResponse(false, null, {
-          message: "Pokémon not found",
-          details: `The Pokémon with the ID ${req.params.id} does not exist in our records.`,
+          message: "Internal Server Error",
+          details: "An unexpected error occurred",
         })
       );
-    } else {
-      res.status(HttpStatus.NO_CONTENT).send(createResponse(true, null));
     }
   },
 };
