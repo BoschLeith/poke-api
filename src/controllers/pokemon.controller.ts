@@ -7,6 +7,7 @@ import { HttpStatus } from "@utils/httpStatus";
 const pokemonService = new PokemonService();
 
 interface PokemonRequestBody {
+  pokedex_number: number;
   name: string;
   sprite: string;
   types: string[];
@@ -100,10 +101,12 @@ export const pokemonController = {
       return;
     }
 
-    const { name, sprite, types }: PokemonRequestBody = req.body;
+    const { pokedex_number, name, sprite, types }: PokemonRequestBody =
+      req.body;
 
     const newPokemon: Pokemon = {
       id: 0,
+      pokedex_number,
       name,
       sprite,
       types,
@@ -152,12 +155,14 @@ export const pokemonController = {
         );
       } else {
         const {
+          pokedex_number = pokemon.pokedex_number,
           name = pokemon.name,
           sprite = pokemon.sprite,
           types = pokemon.types,
         }: PokemonRequestBody = req.body;
 
         const updatedPokemon = await pokemonService.updatePokemon(pokemon.id, {
+          pokedex_number,
           name,
           sprite,
           types,

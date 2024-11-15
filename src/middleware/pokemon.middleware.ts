@@ -5,6 +5,7 @@ const getPokemonByIdValidation = [
 ];
 
 const createPokemonValidation = [
+  body("pokedex_number").notEmpty().withMessage("Pokedex number is required"),
   body("name").notEmpty().withMessage("Name is required"),
   body("sprite").notEmpty().withMessage("Sprite is required"),
   body("types")
@@ -16,6 +17,10 @@ const updatePokemonValidation = [
   param("id")
     .isInt({ gt: 0 })
     .withMessage("ID is required and must be a positive integer"),
+  body("pokedex_number")
+    .optional()
+    .isInt()
+    .withMessage("Pokedex number must be a number"),
   body("name").optional().isString().withMessage("Name must be a string"),
   body("sprite").optional().isString().withMessage("Sprite must be a string"),
   body("types").optional().isArray().withMessage("Types must be an array"),

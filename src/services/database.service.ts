@@ -9,20 +9,21 @@ export default class PokemonService {
   async getAllPokemon(): Promise<Pokemon[]> {
     const response = await sql`
     SELECT 
-        p.id AS pokemon_id,
-        p.name AS pokemon_name,
-        p.sprite AS sprite,
-        ARRAY_AGG(t.type_name) AS types
+      p.id AS id,
+      p.pokedex_number AS pokedex_number,
+      p.name AS name,
+      p.sprite AS sprite,
+      ARRAY_AGG(t.type_name) AS types
     FROM 
-        Pokemon p
+      Pokemon p
     JOIN 
-        Pokemon_Types pt ON p.id = pt.pokemon_id
+      Pokemon_Types pt ON p.id = pt.pokemon_id
     JOIN 
-        Types t ON pt.type_id = t.id
+      Types t ON pt.type_id = t.id
     GROUP BY 
-        p.id, p.name, p.sprite
+      p.id, p.pokedex_number, p.name, p.sprite
     ORDER BY 
-        p.id;
+      p.id;
     `;
 
     return response as Pokemon[];
@@ -31,26 +32,29 @@ export default class PokemonService {
   async getPokemonById(id: number): Promise<Pokemon> {
     const response = await sql`
     SELECT 
-        p.id AS pokemon_id,
-        p.name AS pokemon_name,
-        p.sprite AS sprite,
-        ARRAY_AGG(t.type_name) AS types
+      p.id AS id,
+      p.pokedex_number AS pokedex_number,
+      p.name AS name,
+      p.sprite AS sprite,
+      ARRAY_AGG(t.type_name) AS types
     FROM 
-        Pokemon p
+      Pokemon p
     JOIN 
-        Pokemon_Types pt ON p.id = pt.pokemon_id
+      Pokemon_Types pt ON p.id = pt.pokemon_id
     JOIN 
-        Types t ON pt.type_id = t.id
-    WHERE p.id = ${id}
+      Types t ON pt.type_id = t.id
+    WHERE 
+      p.id = ${id}
     GROUP BY 
-        p.id, p.name, p.sprite
+      p.id, p.pokedex_number, p.name, p.sprite
     ORDER BY 
-        p.id; 
+      p.id; 
     `;
 
     return {
-      id: response[0].pokemon_id,
-      name: response[0].pokemon_name,
+      id: response[0].id,
+      pokedex_number: response[0].pokedex_number,
+      name: response[0].name,
       sprite: response[0].sprite,
       types: response[0].types,
     };
@@ -58,8 +62,8 @@ export default class PokemonService {
 
   async createPokemon(pokemon: Pokemon): Promise<Pokemon> {
     const [insertedPokemon] = await sql`
-      INSERT INTO Pokemon (name, sprite)
-      VALUES (${pokemon.name}, ${pokemon.sprite})
+      INSERT INTO Pokemon (pokedex_number, name, sprite)
+      VALUES (${pokemon.pokedex_number}, ${pokemon.name}, ${pokemon.sprite})
       RETURNING id
     `;
 
@@ -80,14 +84,16 @@ export default class PokemonService {
   }
 
   async updatePokemon(id: number, updates: Partial<Pokemon>): Promise<Pokemon> {
-    const { name, sprite, types } = updates;
+    const { pokedex_number, name, sprite, types } = updates;
 
     await sql`
     UPDATE Pokemon
     SET
+      pokedex_number = COALESCE(${pokedex_number}, pokedex_number),
       name = COALESCE(${name}, name),
       sprite = COALESCE(${sprite}, sprite)
-    WHERE id = ${id}
+    WHERE 
+      id = ${id}
     `;
 
     if (types) {
